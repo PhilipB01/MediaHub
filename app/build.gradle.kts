@@ -8,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.medialist"
+    namespace = "com.discflux.medialist"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.medialist"
+        applicationId = "com.discflux.medialist"
         minSdk = 24
         targetSdk = 35
         versionCode = 1

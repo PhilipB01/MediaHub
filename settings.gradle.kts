@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "AndroidBoilerplate"
+rootProject.name = "MediaHub"
 include(":app")

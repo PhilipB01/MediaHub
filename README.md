@@ -10,7 +10,7 @@ MVVM-ready structure.
 - AndroidManifest + required backup/data-extraction XML
 
 ## Setup
-1. Open the `AndroidBoilerplate/` folder directly in Android Studio
+1. Open the `MediaHub/` folder directly in Android Studio
    (File → Open → select this folder).
 2. Let Gradle sync — Android Studio will generate the Gradle wrapper
    (`gradlew`, `gradle-wrapper.jar/properties`) automatically on first sync
@@ -21,7 +21,7 @@ MVVM-ready structure.
 ```
 app/src/main/
 ├── AndroidManifest.xml
-├── java/com/example/boilerplate/
+├── java/com/discflux/medialist/
 │   ├── MainActivity.kt
 │   └── ui/theme/
 │       ├── Color.kt
@@ -33,7 +33,7 @@ app/src/main/
 ```
 
 ## Next steps to build on this
-- **Package name**: rename `com.example.boilerplate` throughout
+- **Package name**: rename `com.discflux.medialist` throughout
   (build.gradle.kts `namespace`/`applicationId`, manifest, and folder structure)
   to your own package.
 - **Navigation**: `androidx.navigation:navigation-compose` is already a dependency —
