@@ -1,47 +1,58 @@
-# Android Boilerplate (Kotlin + Jetpack Compose)
+# MediaHub
 
-A minimal, modern Android project skeleton: Kotlin, Jetpack Compose, Material 3,
-MVVM-ready structure.
+MediaHub is a modern Android application designed to help users track and manage their personal media collections (movies, books, games, etc.). It follows modern Android development best practices with a focus on a clean, scalable architecture.
 
-## What's included
-- `MainActivity.kt` — entry point, sets Compose content, edge-to-edge enabled
-- `ui/theme/` — Color.kt, Type.kt, Theme.kt (Material 3 theming, dynamic color on API 31+)
-- Gradle Kotlin DSL build files (`build.gradle.kts`) at root and app level
-- AndroidManifest + required backup/data-extraction XML
+## Project Summary
+MediaHub allows users to:
+- **Discover & Manage**: Keep a list of media items with details and categories.
+- **Dashboard**: View summaries and personalized suggestions.
+- **Roulette**: A fun way to pick what to watch or read next when you can't decide.
+- **Authentication**: Secure login using Firebase Authentication.
+- **Persistence**: Hybrid storage using Room for local caching and Firestore for cloud sync.
 
-## Setup
-1. Open the `MediaHub/` folder directly in Android Studio
-   (File → Open → select this folder).
-2. Let Gradle sync — Android Studio will generate the Gradle wrapper
-   (`gradlew`, `gradle-wrapper.jar/properties`) automatically on first sync
-   if they're missing.
-3. Run on an emulator or device (min SDK 24 / Android 7.0+).
+## Tech Stack
+- **Language**: Kotlin
+- **UI Framework**: Jetpack Compose with Material 3
+- **Architecture**: MVVM with Clean Architecture principles
+- **Dependency Injection**: Hilt
+- **Local Database**: Room
+- **Backend/Auth**: Firebase (Auth, Firestore)
+- **Navigation**: Compose Navigation
 
-## Project structure
+## Getting Started
+
+### Working with Android Studio
+1. **Open Project**: Select the root `MediaHub` folder in Android Studio.
+2. **Gradle Sync**: After opening, or whenever you modify `build.gradle.kts` files, click the **Sync Project with Gradle Files** icon (elephant with blue arrow).
+3. **Running the App**: Select the `app` configuration and click the **Run** (green play) button. Ensure you have an emulator or physical device (API 24+) connected.
+4. **Debugging**: Use **Logcat** (Alt+6 / Cmd+6) to view system logs and **Layout Inspector** to debug your Compose UI.
+
+### Working with Git
+1. **Branching**: It's best practice to work on a new branch for each feature:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+2. **Commit Often**: Make small, frequent commits with clear messages:
+   ```bash
+   git add .
+   git commit -m "Add roulette selection logic"
+   ```
+3. **Staying Updated**: Pull the latest changes from the main branch regularly:
+   ```bash
+   git pull origin main
+   ```
+4. **Pushing Changes**: Push your branch to GitHub to share your progress:
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+
+## Project Structure
 ```
-app/src/main/
-├── AndroidManifest.xml
-├── java/com/discflux/medialist/
-│   ├── MainActivity.kt
-│   └── ui/theme/
-│       ├── Color.kt
-│       ├── Theme.kt
-│       └── Type.kt
-└── res/
-    ├── values/ (strings.xml, themes.xml)
-    └── xml/    (backup_rules.xml, data_extraction_rules.xml)
+app/src/main/java/com/discflux/medialist/
+├── data/           # Data layer: Repositories, DAOs, Entities, Mappers
+├── di/             # Hilt Dependency Injection modules
+├── domain/         # Domain layer: Use cases, Repository interfaces, Domain models
+├── ui/             # Presentation layer: Screens, ViewModels, Theme, Navigation
+├── MainActivity.kt # Entry point
+└── MediaHubApplication.kt
 ```
-
-## Next steps to build on this
-- **Package name**: rename `com.discflux.medialist` throughout
-  (build.gradle.kts `namespace`/`applicationId`, manifest, and folder structure)
-  to your own package.
-- **Navigation**: `androidx.navigation:navigation-compose` is already a dependency —
-  add a `NavHost` in `MainActivity.kt` once you have more than one screen.
-- **ViewModel**: `lifecycle-viewmodel-compose` is included — add a `ViewModel`
-  per screen and inject with `viewModel()` in your composables.
-- **Networking/DI**: not included by design (keeps this a true minimal
-  boilerplate) — add Retrofit/Ktor and Hilt/Koin as needed.
-- **App icon**: default launcher icon references (`@mipmap/ic_launcher`) are
-  in the manifest but the actual mipmap drawables aren't included — Android
-  Studio's "New Project" icon wizard or Image Asset Studio can generate these.
