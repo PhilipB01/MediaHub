@@ -1,5 +1,6 @@
 package com.discflux.medialist.data.repository
 
+import android.util.Log
 import com.discflux.medialist.domain.repository.AuthRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -28,6 +29,18 @@ class AuthRepositoryImpl @Inject constructor(
             val result = firebaseAuth.signInWithCredential(credential).await()
             Result.success(result.user)
         } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun signInAnonymously(): Result<FirebaseUser?> {
+        return try {
+            Log.d("AuthRepository", "Attempting anonymous sign-in...")
+            val result = firebaseAuth.signInAnonymously().await()
+            Log.d("AuthRepository", "Anonymous sign-in success: ${result.user?.uid}")
+            Result.success(result.user)
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "Anonymous sign-in failed", e)
             Result.failure(e)
         }
     }

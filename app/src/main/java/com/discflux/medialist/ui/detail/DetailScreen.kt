@@ -60,7 +60,7 @@ fun DetailScreen(
             )
         }
     ) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize()) {
             when (val state = uiState) {
                 is DetailUiState.Loading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -68,7 +68,8 @@ fun DetailScreen(
                 is DetailUiState.Success -> {
                     DetailContent(
                         item = state.mediaItem,
-                        onUpdate = { viewModel.updateMediaItem(it) }
+                        onUpdate = { viewModel.updateMediaItem(it) },
+                        contentPadding = innerPadding
                     )
                 }
                 is DetailUiState.Error -> {
@@ -87,12 +88,14 @@ fun DetailScreen(
 fun DetailContent(
     item: MediaItem,
     onUpdate: (MediaItem) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .padding(bottom = contentPadding.calculateBottomPadding())
     ) {
         // Immersive Header with Gradient
         Box(
@@ -229,11 +232,11 @@ fun TvShowDetails(item: MediaItem) {
         }
         
         LinearProgressIndicator(
-            progress = { 
+            progress = {
                 val current = (item.currentEpisode ?: 0).toFloat()
                 val total = (item.totalEpisodes ?: 1).toFloat()
                 if (total > 0) current / total else 0f
-            },
+            }.invoke(),
             modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
             color = MaterialTheme.colorScheme.primary,
             trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
@@ -265,7 +268,7 @@ fun BookDetails(item: MediaItem) {
                 val current = (item.currentPage ?: 0).toFloat()
                 val total = (item.totalPages ?: 1).toFloat()
                 if (total > 0) current / total else 0f
-            },
+            }.invoke(),
             modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp))
         )
         

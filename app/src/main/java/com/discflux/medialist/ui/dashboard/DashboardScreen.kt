@@ -64,12 +64,12 @@ fun DashboardContent(
     ) { innerPadding ->
         Column(
             modifier = Modifier
-                .padding(innerPadding)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = 16.dp),
+                .padding(bottom = innerPadding.calculateBottomPadding() + 16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+            Spacer(Modifier.height(innerPadding.calculateTopPadding()))
             // "Continue" Carousel
             if (continueItems.isNotEmpty()) {
                 Column {

@@ -1,6 +1,7 @@
 package com.discflux.medialist.data.repository
 
 import com.discflux.medialist.data.local.dao.MediaDao
+import com.discflux.medialist.data.local.entity.MediaEntity
 import com.discflux.medialist.data.local.entity.toDomain
 import com.discflux.medialist.data.local.entity.toEntity
 import com.discflux.medialist.domain.model.MediaCategory
@@ -65,5 +66,18 @@ class MediaRepositoryImpl @Inject constructor(
         
         // Delete from Firestore
         mediaCollection?.document(media.id.toString())?.delete()?.await()
+    }
+
+    override suspend fun fetchFromRemote() {
+        val collection = mediaCollection ?: return
+        try {
+            val snapshot = collection.get().await()
+            val entities = snapshot.documents.mapNotNull { it.toObject(MediaEntity::class.java) }
+            if (entities.isNotEmpty()) {
+                mediaDao.insertMediaList(entities)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 }

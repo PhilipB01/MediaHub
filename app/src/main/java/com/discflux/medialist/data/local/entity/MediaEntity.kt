@@ -8,14 +8,14 @@ import com.discflux.medialist.domain.model.MediaItem
 @Entity(tableName = "media")
 data class MediaEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val type: Int,
-    val title: String,
-    val author: String?,
-    val date: Long,
-    val url: String,
-    val description: String,
-    val rating: Float,
-    val isComplete: Boolean,
+    val type: Int = 0,
+    val title: String = "",
+    val author: String? = null,
+    val date: Long = 0,
+    val url: String = "",
+    val description: String = "",
+    val rating: Float = 0f,
+    val isComplete: Boolean = false,
     val isWishlist: Boolean = false,
     val isOwned: Boolean = true,
     

@@ -54,10 +54,9 @@ fun AddMediaScreen(
         }
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
+            modifier = Modifier.fillMaxSize()
         ) {
+            Spacer(Modifier.height(innerPadding.calculateTopPadding()))
             if (uiState.selectedItem == null) {
                 // Search View
                 OutlinedTextField(
@@ -82,7 +81,10 @@ fun AddMediaScreen(
                     LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 }
 
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = innerPadding.calculateBottomPadding() + 16.dp)
+                ) {
                     items(uiState.searchResults) { item ->
                         ListItem(
                             headlineContent = { Text(item.title) },
@@ -96,7 +98,8 @@ fun AddMediaScreen(
                 // Selection / Detail Form View
                 DetailContent(
                     item = uiState.selectedItem!!,
-                    onUpdate = { viewModel.onUpdateSelectedItem(it) }
+                    onUpdate = { viewModel.onUpdateSelectedItem(it) },
+                    contentPadding = innerPadding
                 )
             }
         }

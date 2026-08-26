@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 import kotlinx.coroutines.flow.map
@@ -16,6 +17,12 @@ import kotlinx.coroutines.flow.map
 class DashboardViewModel @Inject constructor(
     private val repository: MediaRepository
 ) : ViewModel() {
+
+    init {
+        viewModelScope.launch {
+            repository.fetchFromRemote()
+        }
+    }
 
     val recentMedia: StateFlow<List<MediaItem>> = repository.getAllMedia()
         .stateIn(

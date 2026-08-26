@@ -61,7 +61,6 @@ fun RouletteScreen(
     ) { innerPadding ->
         Box(
             modifier = Modifier
-                .padding(innerPadding)
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
@@ -76,7 +75,9 @@ fun RouletteScreen(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(32.dp)
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .padding(32.dp)
             ) {
                 if (suggestedMedia == null && !isRolling) {
                     Text(

@@ -11,4 +11,5 @@ interface MediaRepository {
     suspend fun upsertMedia(media: MediaItem)
     suspend fun updatePositions(items: List<MediaItem>)
     suspend fun deleteMedia(media: MediaItem)
+    suspend fun fetchFromRemote()
 }

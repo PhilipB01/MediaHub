@@ -176,7 +176,6 @@ fun MediaListContent(
         }
         Column(
             modifier = Modifier
-                .padding(innerPadding)
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
@@ -187,6 +186,7 @@ fun MediaListContent(
                     )
                 )
         ) {
+            Spacer(Modifier.height(innerPadding.calculateTopPadding()))
             // Media Categories as Tabs
             val categories = listOf(null) + MediaCategory.entries
             val selectedIndex = categories.indexOf(selectedCategory)
@@ -275,7 +275,9 @@ fun MediaListContent(
 
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 16.dp),
+                contentPadding = PaddingValues(
+                    bottom = innerPadding.calculateBottomPadding() + 80.dp // Extra padding for FAB
+                ),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 statusOrder.forEach { status ->

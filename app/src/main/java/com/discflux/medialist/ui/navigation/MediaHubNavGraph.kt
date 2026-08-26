@@ -1,5 +1,6 @@
 package com.discflux.medialist.ui.navigation
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -31,6 +32,7 @@ fun MediaHubNavGraph(
             LoginScreen(
                 viewModel = hiltViewModel(),
                 onLoginSuccess = {
+                    Log.d("NavGraph", "Login success - navigating to Dashboard")
                     navController.navigate(Screen.Dashboard.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }

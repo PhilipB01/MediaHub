@@ -1,5 +1,6 @@
 package com.discflux.medialist.ui.login
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.discflux.medialist.domain.repository.AuthRepository
@@ -22,6 +23,9 @@ class LoginViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _isBypassed = MutableStateFlow(false)
+    val isBypassed: StateFlow<Boolean> = _isBypassed.asStateFlow()
+
     init {
         viewModelScope.launch {
             authRepository.currentUser.collect {
@@ -36,6 +40,23 @@ class LoginViewModel @Inject constructor(
             authRepository.signInWithGoogle(idToken)
             _isLoading.value = false
         }
+    }
+
+    fun signInAnonymously() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val result = authRepository.signInAnonymously()
+            result.onFailure {
+                Log.e("LoginViewModel", "Anonymous sign-in error: ${it.message}")
+                // Fallback to local-only bypass if Firebase is not configured
+                _isBypassed.value = true
+            }
+            _isLoading.value = false
+        }
+    }
+
+    fun forceBypass() {
+        _isBypassed.value = true
     }
 
     fun signOut() {

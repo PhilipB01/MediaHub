@@ -1,26 +1,36 @@
 {
   "project_info": {
-    "project_number": "1234567890",
-    "project_id": "dummy-project-id",
-    "storage_bucket": "dummy-project-id.appspot.com"
+    "project_number": "537109018434",
+    "project_id": "mediahub-34412",
+    "storage_bucket": "mediahub-34412.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1234567890:android:dummyappid",
+        "mobilesdk_app_id": "1:537109018434:android:0f2d7248a4f7bccc983adb",
         "android_client_info": {
           "package_name": "com.discflux.medialist"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "537109018434-r06418hcve7trd2e0l0a3oet0ke7n0l1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "dummy-api-key"
+          "current_key": "AIzaSyBnAYhMxsRGl0AoJdcY4tYzow5P5tTmWCU"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "537109018434-r06418hcve7trd2e0l0a3oet0ke7n0l1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
