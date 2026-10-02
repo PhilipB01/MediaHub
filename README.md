@@ -10,6 +10,15 @@ MediaHub allows users to:
 - **Authentication**: Secure login using Firebase Authentication.
 - **Persistence**: Hybrid storage using Room for local caching and Firestore for cloud sync.
 
+## Documentation
+- [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md): architecture, dependencies, configuration, features
+- [docs/ROADMAP.md](docs/ROADMAP.md): known issues, roadmap, future work
+- [docs/DECISIONS.md](docs/DECISIONS.md): why major choices were made
+- [docs/HISTORY.md](docs/HISTORY.md): project history and legacy origins
+- [docs/plans/](docs/plans/): feature specs (where to watch, metadata providers, iOS port)
+
+To use TMDB search, add `TMDB_API_TOKEN=<v4 read access token>` to `local.properties`.
+
 ## Tech Stack
 - **Language**: Kotlin
 - **UI Framework**: Jetpack Compose with Material 3
