@@ -93,6 +93,7 @@ fun MediaItem.toEntity() = MediaEntity(
     currentSeason = currentSeason,
     currentEpisode = currentEpisode,
     totalEpisodes = totalEpisodes,
+    totalSeasons = totalSeasons,
     publisher = publisher,
     synopsis = synopsis,
     currentPage = currentPage,

@@ -19,7 +19,7 @@ data class MediaListUiState(
     val searchQuery: String = "",
     val selectedCategory: MediaCategory? = null,
     val selectedFilters: Set<StatusFilter> = setOf(StatusFilter.ALL),
-    val sortBy: SortOption = SortOption.DATE_ADDED
+    val sortBy: SortOption = SortOption.MANUAL
 )
 
 enum class StatusFilter {
@@ -27,7 +27,7 @@ enum class StatusFilter {
 }
 
 enum class SortOption {
-    DATE_ADDED, RATING, TITLE
+    MANUAL, DATE_ADDED, RATING, TITLE
 }
 
 @HiltViewModel
@@ -38,7 +38,7 @@ class MediaListViewModel @Inject constructor(
     private val _searchQuery = MutableStateFlow("")
     private val _selectedCategory = MutableStateFlow<MediaCategory?>(null)
     private val _selectedFilters = MutableStateFlow<Set<StatusFilter>>(setOf(StatusFilter.ALL))
-    private val _sortBy = MutableStateFlow(SortOption.DATE_ADDED)
+    private val _sortBy = MutableStateFlow(SortOption.MANUAL)
 
     val uiState: StateFlow<MediaListUiState> = combine(
         repository.getAllMedia(),
@@ -77,17 +77,13 @@ class MediaListViewModel @Inject constructor(
                         item.isOwned -> 1
                         else -> 4
                     }
-                }.thenByDescending { 
-                    when (sort) {
-                        SortOption.DATE_ADDED -> it.date.toFloat()
-                        SortOption.RATING -> it.rating
-                        SortOption.TITLE -> 0f // Special handling for title below
-                    }
                 }.let { comparator ->
-                    if (sort == SortOption.TITLE) {
-                        comparator.thenBy { it.title }
-                    } else {
-                        comparator
+                    when (sort) {
+                        // Ties (e.g. never-reordered items, all position 0) fall back to newest first.
+                        SortOption.MANUAL -> comparator.thenBy { it.position }.thenByDescending { it.date }
+                        SortOption.DATE_ADDED -> comparator.thenByDescending { it.date }
+                        SortOption.RATING -> comparator.thenByDescending { it.rating }
+                        SortOption.TITLE -> comparator.thenBy { it.title }
                     }
                 }
             )
