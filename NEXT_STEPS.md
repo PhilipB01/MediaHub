@@ -20,6 +20,21 @@ See [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for how the app is put together.
 - Posters load straight from TMDB with Coil's default cache; no placeholder or error artwork.
 - Search returns only the first page of results.
 
+## Planned feature: "Where to watch" (streaming availability by country)
+Researched 2026-10-03. Streaming services (Netflix, Max, Prime Video, Apple TV, Disney+) have no public availability APIs; Netflix shut its public API in 2014. Availability data comes from aggregators instead.
+
+| Source | Countries | Subscription vs rent/buy | Prices / deep links | Cost and terms |
+|---|---|---|---|---|
+| TMDB `/{movie,tv}/{id}/watch/providers` (JustWatch data) | Per-country, including Indonesia | Yes: `flatrate`, `rent`, `buy`, `free`, `ads` | No prices, no deep links; links to the TMDB watch page | Free for non-commercial use; JustWatch attribution required; commercial use needs a TMDB licence |
+| Streaming Availability API (Movie of the Night) | 66, including ID, MY, PH, SG, TH, VN | Yes, plus add-on channels | Prices for rent/buy, deep links, expiry dates | Free tier (~100 requests/day); paid plans above that; attribution required |
+| Watchmode | Global; free plan limited to 3 countries | Yes, plus free | Deep links on paid plans only | Free: 2,500 requests/month, non-commercial; paid from $29/month |
+| JustWatch direct | ~46+ countries | Yes | Yes | Large partners only, commercial licence |
+
+Suggested plan:
+1. **MVP (free):** a "Where to watch" section on Detail for films and TV, using TMDB watch providers we already integrate with. Region comes from the device locale, with an override in settings. Show provider logos grouped as Stream / Free / Rent / Buy, a JustWatch credit, and a link to the TMDB watch page. Cache per title and region in Room with a TTL of about 24 hours.
+2. **Upgrade if it proves popular:** add Streaming Availability API behind the same `WatchProvidersRepository` interface for prices, deep links and "leaving soon" dates, called through a small backend proxy so the key isn't shipped in the APK.
+3. **Before charging money or showing ads:** get commercial licences from TMDB and the chosen availability provider.
+
 ## Unfinished items from the handover
 1. Music details UI in `DetailScreen.kt` (placeholder text) and the "Available on Streaming Platforms (Placeholder)" block.
 2. Sort UI: `SortOption` (now incl. `MANUAL`) exists in the ViewModel but no screen exposes it.
