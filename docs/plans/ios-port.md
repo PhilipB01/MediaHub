@@ -92,7 +92,66 @@ Rough estimate for converting the current app to KMP with shared UI: **1–2 wee
 
 Choose **C** only if learning Swift is a goal in itself, or if deep Apple-only features such as SharePlay become central. Note that SharePlay ("watch together" over FaceTime) is Apple-only, works through Swift APIs, and is reachable from KMP via interop if needed later.
 
-## 4. Practical iOS requirements
+## 4. Repository and project structure
+Use **one git repository** for every option. Shared code changes must land together with both apps, and separate repos mean version-syncing pain.
+
+### Option A: KMP with Compose Multiplatform (shared UI)
+```
+MediaHub/                      one git repo
+├── shared/                    Kotlin module, ~90% of the app
+│   └── src/
+│       ├── commonMain/        models, repositories, Ktor API, Room, ViewModels, ALL Compose screens, theme
+│       ├── androidMain/       Android-only code (Google sign-in via Credential Manager, Room DB builder)
+│       ├── iosMain/           iOS-only code (Sign in with Apple bridge, Room DB builder, ComposeUIViewController)
+│       └── commonTest/        tests that run on both platforms
+├── androidApp/                tiny: MainActivity calls App(); manifest; google-services.json
+├── iosApp/                    Xcode project: ~20 lines of Swift that host the shared Compose UI
+├── build.gradle.kts, settings.gradle.kts, gradle/libs.versions.toml
+└── docs/, CLAUDE.md
+```
+- **Android Studio:** everything in `shared/` and `androidApp/`, running the Android app, and all Gradle work.
+- **Xcode:** open `iosApp/` to build, run on a simulator or iPhone, sign, and upload to TestFlight. You rarely edit code there.
+- **How the iPhone app works:** the iOS app is a SwiftUI shell that embeds a `ComposeUIViewController` from `shared`, so Swift only hosts the Kotlin UI.
+
+### Option B: KMP logic with SwiftUI screens
+```
+MediaHub/
+├── shared/                    Kotlin module, ~50-60%: NO UI
+│   └── src/
+│       ├── commonMain/        models, repositories, Ktor, Room, ViewModels/state
+│       ├── androidMain/
+│       ├── iosMain/
+│       └── commonTest/
+├── androidApp/                Compose screens (Android-only now) + MainActivity
+├── iosApp/                    Xcode project: SwiftUI screens, written in Swift
+└── ...
+```
+- **Android Studio:** `shared/` and `androidApp/`.
+- **Xcode:** `iosApp/`, daily. Every screen is Swift code there. The `shared` module is rebuilt as a framework whenever shared Kotlin changes.
+- **Cost:** every screen exists twice, once in Compose and once in SwiftUI.
+
+### What lives where (both options)
+| Shared (`commonMain`) | Platform-specific |
+|---|---|
+| `MediaItem`, `MediaCategory`, mappers | Google sign-in (Credential Manager) vs Sign in with Apple |
+| Repositories, use cases, Ktor API, DTOs | Room database builder (needs an Android `Context`; iOS uses a file path) |
+| Room DAOs and entities | Firebase config files (`google-services.json` vs `GoogleService-Info.plist`) |
+| ViewModels and UI state | Permissions, notifications, widgets, share sheets |
+| Option A only: Compose screens and theme | App entry point and manifest or Info.plist |
+
+Platform differences are handled with `expect`/`actual` (the shared code declares what it needs and each platform fulfils it) or with an interface that each platform implements and injects. Prefer interfaces: they are easier to test and easier to follow.
+
+### Architecture guidelines
+1. **One-way dependencies:** `androidApp` and `iosApp` depend on `shared`, never the reverse. If `shared` needs something platform-specific, define an interface in `commonMain` and implement it in each app.
+2. **Keep the current layering:** `domain` (pure Kotlin, no frameworks), `data` and `ui`. The existing rule against leaking Retrofit, Room or Firebase types into the domain layer is what makes this port easy.
+3. **Keep platform-specific code small:** write a few `actual`s (database builder, sign-in, locale) and check whether a multiplatform library already exists before adding more (Ktor, Coil 3, Room, DataStore, Koin and GitLive Firebase all do).
+4. **Use a version catalog** (`gradle/libs.versions.toml`). KMP projects have many dependencies across several modules, and the current project has versions inline.
+5. **Test in `commonTest` with hand-written fakes.** MockK is JVM-only, so shared tests cannot use it.
+6. **Expect extra iOS friction:** Firebase on iOS needs CocoaPods or Swift Package Manager, and the first Xcode build is slow. Do the Hello World spike in section 7 before converting anything.
+
+Starting with Option A does not lock out Option B: individual screens can later be written in SwiftUI and embedded in the iOS app.
+
+## 5. Practical iOS requirements
 - **Xcode:** already available; needed to build, sign and run.
 - **Apple ID, free:** installs the app on your *own* iPhone from Xcode, but the provisioning profile **expires after 7 days**, after which you rebuild.
 - **Apple Developer Program ($99/year):** needed for **TestFlight**, which is the practical way to put the app on a partner's iPhone remotely. It's also needed for the App Store and for features like Sign in with Apple and push notifications.
@@ -100,7 +159,7 @@ Choose **C** only if learning Swift is a goal in itself, or if deep Apple-only f
 - **Firebase:** add an iOS app in the Firebase console and download `GoogleService-Info.plist`. Firestore data is shared across platforms automatically.
 - **Testing:** use the iOS Simulator (included with Xcode); real devices are needed for sign-in edge cases.
 
-## 5. Long-distance couple features (platform-independent)
+## 6. Long-distance couple features (platform-independent)
 These are the real reason for the port. They depend on Firestore data modelling, not on the iOS choice:
 - **Shared lists:** today data lives at `users/{uid}/media`. Add `lists/{listId}` with `members: [uid1, uid2]` and items under it, Firestore rules that allow members, and an invite flow (link or code).
 - **Watch together:** a shared "Tonight's pick" using Roulette over the *shared* list, filtered to services you **both** have (from "Where to watch" + "My services").
@@ -109,7 +168,7 @@ These are the real reason for the port. They depend on Firestore data modelling,
 
 The sync-engine work in the roadmap (listeners, `updatedAt`, UUID ids) is a prerequisite for shared lists, whatever the platform.
 
-## 6. Suggested path
+## 7. Suggested path
 1. **Now (Android):** keep new code multiplatform-friendly.
    - No new Android-only libraries in data or domain.
    - Prefer interfaces over Android types.
