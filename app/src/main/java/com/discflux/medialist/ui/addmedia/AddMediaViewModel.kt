@@ -4,98 +4,116 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.discflux.medialist.domain.model.MediaCategory
 import com.discflux.medialist.domain.model.MediaItem
+import com.discflux.medialist.domain.model.MediaSearchResult
 import com.discflux.medialist.domain.repository.MediaRepository
+import com.discflux.medialist.domain.repository.MediaSearchRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class AddMediaViewModel @Inject constructor(
-    private val repository: MediaRepository
+    private val repository: MediaRepository,
+    private val searchRepository: MediaSearchRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddMediaUiState())
     val uiState: StateFlow<AddMediaUiState> = _uiState.asStateFlow()
 
+    private var searchJob: Job? = null
+
     fun onSearchQueryChange(query: String, category: MediaCategory) {
-        _uiState.value = _uiState.value.copy(searchQuery = query)
-        if (query.length >= 3) {
-            searchMedia(query, category)
-        } else {
-            _uiState.value = _uiState.value.copy(searchResults = emptyList())
+        searchJob?.cancel()
+        _uiState.update { it.copy(searchQuery = query, errorMessage = null) }
+
+        if (query.trim().length < MIN_QUERY_LENGTH || !searchRepository.isSupported(category)) {
+            _uiState.update { it.copy(searchResults = emptyList(), isSearching = false) }
+            return
+        }
+
+        searchJob = viewModelScope.launch {
+            delay(SEARCH_DEBOUNCE_MS)
+            _uiState.update { it.copy(isSearching = true) }
+            searchRepository.search(query.trim(), category)
+                .onSuccess { results ->
+                    _uiState.update { it.copy(searchResults = results, isSearching = false) }
+                }
+                .onFailure {
+                    _uiState.update {
+                        it.copy(
+                            searchResults = emptyList(),
+                            isSearching = false,
+                            errorMessage = "Search failed. Check your connection, or add it manually."
+                        )
+                    }
+                }
         }
     }
 
-    private fun searchMedia(query: String, category: MediaCategory) {
-        _uiState.value = _uiState.value.copy(isSearching = true)
+    fun onResultSelected(result: MediaSearchResult) {
+        searchJob?.cancel()
+        // Show the search hit straight away, then fill in cast, runtime etc. when details arrive.
+        showSelection(result.item)
+        _uiState.update { it.copy(isSearching = true) }
         viewModelScope.launch {
-            // Mock API search
-            kotlinx.coroutines.delay(500)
-            val results = listOf(
-                MediaItem(
-                    title = "$query Result 1",
-                    type = category,
-                    author = "Author 1",
-                    description = "This is a detailed description for $query Result 1 which covers the main plot points.",
-                    date = System.currentTimeMillis(),
-                    url = "",
-                    rating = 0f,
-                    isComplete = false,
-                    yearOfRelease = 2024,
-                    runtime = if (category == MediaCategory.FILM) 124 else null,
-                    totalSeasons = if (category == MediaCategory.TV_SERIES) 3 else null,
-                    totalEpisodes = if (category == MediaCategory.TV_SERIES) 24 else null
-                ),
-                MediaItem(
-                    title = "$query Result 2",
-                    type = category,
-                    author = "Author 2",
-                    description = "Another fascinating description for $query Result 2, highlighting the unique aspects of this media.",
-                    date = System.currentTimeMillis(),
-                    url = "",
-                    rating = 0f,
-                    isComplete = false,
-                    yearOfRelease = 2022,
-                    runtime = if (category == MediaCategory.FILM) 95 else null,
-                    totalSeasons = if (category == MediaCategory.TV_SERIES) 1 else null,
-                    totalEpisodes = if (category == MediaCategory.TV_SERIES) 10 else null
-                )
-            )
-            _uiState.value = _uiState.value.copy(
-                searchResults = results,
-                isSearching = false
-            )
+            val detailed = searchRepository.getDetails(result).getOrNull()?.item
+            _uiState.update { state ->
+                // Only apply details if the user hasn't backed out or started editing.
+                if (detailed != null && state.selectedItem == result.item) {
+                    state.copy(selectedItem = detailed, isSearching = false)
+                } else {
+                    state.copy(isSearching = false)
+                }
+            }
         }
     }
 
-    fun onItemSelected(item: MediaItem?) {
-        _uiState.value = _uiState.value.copy(
-            selectedItem = item,
-            searchResults = if (item == null) _uiState.value.searchResults else emptyList(),
-            searchQuery = if (item == null) _uiState.value.searchQuery else ""
-        )
+    fun onAddManually(category: MediaCategory) {
+        val title = _uiState.value.searchQuery.trim()
+        if (title.isEmpty()) return
+        searchJob?.cancel()
+        showSelection(MediaItem(type = category, title = title, date = System.currentTimeMillis()))
+    }
+
+    fun onClearSelection() {
+        _uiState.update { it.copy(selectedItem = null) }
     }
 
     fun onUpdateSelectedItem(item: MediaItem) {
-        _uiState.value = _uiState.value.copy(selectedItem = item)
+        _uiState.update { it.copy(selectedItem = item) }
     }
 
     fun saveMedia(onComplete: () -> Unit) {
         val selectedItem = _uiState.value.selectedItem ?: return
-        
+
         viewModelScope.launch {
             repository.upsertMedia(selectedItem)
             onComplete()
         }
     }
+
+    private fun showSelection(item: MediaItem) {
+        _uiState.update {
+            it.copy(selectedItem = item, searchResults = emptyList(), isSearching = false, errorMessage = null)
+        }
+    }
+
+    companion object {
+        const val MIN_QUERY_LENGTH = 2
+        const val SEARCH_DEBOUNCE_MS = 400L
+    }
 }
 
 data class AddMediaUiState(
     val searchQuery: String = "",
-    val searchResults: List<MediaItem> = emptyList(),
+    val searchResults: List<MediaSearchResult> = emptyList(),
     val isSearching: Boolean = false,
-    val selectedItem: MediaItem? = null
+    val selectedItem: MediaItem? = null,
+    val errorMessage: String? = null
 )
