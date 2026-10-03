@@ -56,6 +56,24 @@ Format: **Decision**, then Why, Alternatives, and Revisit if.
 - **Trade-off:** no prices or deep links; the data is JustWatch's, whose Indonesian coverage the user has doubts about.
 - **Revisit after:** the data-quality test in [plans/where-to-watch.md](plans/where-to-watch.md).
 
+### 2026-10-03: Open Library for books, RAWG for games
+- **Why Open Library:** needs no API key and covers (by cover id) are not rate-limited, so books work out of the box. Search results lack descriptions, so a second call to the work record is made when the user picks a result.
+- **Alternatives:** Google Books (better descriptions, but quota and key concerns at scale; kept as a possible fallback or for ISBN lookup).
+- **Why RAWG:** a free key and a simple REST API with screenshots, genres, developers and publishers. The key is read from `local.properties`; without one, games fall back to manual add instead of failing with 401s.
+- **Alternative:** IGDB, with richer data, but it needs Twitch OAuth with a client secret, which cannot safely ship in an APK. Revisit when there is a backend proxy.
+- **Trade-off:** RAWG's terms require attribution (shown under the results) and limit free-tier use; confirm before any commercial release.
+
+### 2026-10-03: `MediaSearchResult.remoteId` is a `String`
+- **Why:** Open Library identifies works by string keys, MusicBrainz will use UUIDs, TMDB and RAWG use numbers. A string holds all of them with no per-provider type.
+- **Alternative:** a sealed id type; heavier than needed for a value that is only passed back to the same provider.
+
+### 2026-10-03: One shared OkHttp client, per-API customisation
+- **Why:** a single connection pool, with `newBuilder()` adding each API's auth (TMDB bearer header, RAWG `key` query parameter, Open Library `User-Agent`). Adding a provider is one `@Provides` function.
+- **Alternative:** Hilt `@Named` clients and Retrofits per provider; more boilerplate for the same effect.
+
+### 2026-10-03: Roulette spin state lives in the ViewModel
+- **Why:** the spin flag used to be local to the screen and was reset by a `LaunchedEffect` that never ran, so the wheel spun forever. The ViewModel now owns `isRolling` and always ends the spin, which also makes it unit-testable with a fake clock.
+
 ### Earlier (Gemini / Android Studio sessions, Aug 2026)
 - **Credential Manager over the legacy Google Sign-In API:** the legacy API is deprecated.
 - **Destructive Room migration (v4):** acceptable in early development; must change before release.

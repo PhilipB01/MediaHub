@@ -25,7 +25,7 @@ class TmdbMappersTest {
         val results = page.results.map { it.toSearchResult(now = 123L) }
 
         with(results[0]) {
-            assertEquals(27205L, remoteId)
+            assertEquals("27205", remoteId)
             assertEquals(MediaCategory.FILM, item.type)
             assertEquals("Inception", item.title)
             assertEquals(2010, item.yearOfRelease)

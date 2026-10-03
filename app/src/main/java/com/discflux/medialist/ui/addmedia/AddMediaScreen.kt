@@ -33,7 +33,7 @@ fun AddMediaScreen(
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val usesTmdb = category == MediaCategory.FILM || category == MediaCategory.TV_SERIES
+    val searchSupported = viewModel.isSearchSupported(category)
 
     Scaffold(
         topBar = {
@@ -138,10 +138,20 @@ fun AddMediaScreen(
                             )
                         }
                     }
-                    if (usesTmdb) {
+                    if (!searchSupported) {
+                        item(key = "unsupported") {
+                            Text(
+                                text = "Online search isn't available for ${category.displayName.lowercase()} yet. Type a title and add it manually.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                            )
+                        }
+                    }
+                    attributionFor(category).takeIf { searchSupported }?.let { attribution ->
                         item(key = "attribution") {
                             Text(
-                                text = "This product uses the TMDB API but is not endorsed or certified by TMDB.",
+                                text = attribution,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(16.dp)
@@ -159,4 +169,13 @@ fun AddMediaScreen(
             }
         }
     }
+}
+
+/** Data-source credits required by the providers' terms. */
+private fun attributionFor(category: MediaCategory): String? = when (category) {
+    MediaCategory.FILM, MediaCategory.TV_SERIES ->
+        "This product uses the TMDB API but is not endorsed or certified by TMDB."
+    MediaCategory.BOOK -> "Book data from Open Library (openlibrary.org)."
+    MediaCategory.GAME -> "Game data from RAWG (rawg.io)."
+    MediaCategory.MUSIC -> null
 }

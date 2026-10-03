@@ -10,7 +10,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
 }
 
-// API keys live in local.properties (git-ignored), e.g. TMDB_API_TOKEN=<v4 read access token>
+// API keys live in local.properties (git-ignored): TMDB_API_TOKEN=<v4 read access token>, RAWG_API_KEY=<key>
 val localProperties = Properties().apply {
     rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
 }
@@ -32,6 +32,11 @@ android {
             "String",
             "TMDB_API_TOKEN",
             "\"${localProperties.getProperty("TMDB_API_TOKEN", "")}\""
+        )
+        buildConfigField(
+            "String",
+            "RAWG_API_KEY",
+            "\"${localProperties.getProperty("RAWG_API_KEY", "")}\""
         )
     }
 

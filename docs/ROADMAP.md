@@ -1,6 +1,6 @@
 # MediaHub Roadmap
 
-**Last updated:** 2026-10-03. 35 unit tests passing on `feature/tmdb-search` (PR open against `main`).
+**Last updated:** 2026-10-03. Unit tests passing; PR for TMDB open against `main`; books, games and the roulette fix are on branch `feature/roulette-and-providers`.
 How the app works today: [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md). Why things were built this way: [DECISIONS.md](DECISIONS.md).
 
 Effort key: **S** is under a day, **M** is 1–3 days, **L** is a week or more.
@@ -11,7 +11,8 @@ Effort key: **S** is under a day, **M** is 1–3 days, **L** is a week or more.
 *(Time-sensitive: update or delete rows as they are resolved.)*
 | Item | Blocked on | Then |
 |---|---|---|
-| Verify TMDB search live | `TMDB_API_TOKEN` in `local.properties` | Run the app and search for a few films and series; check posters, cast and runtime |
+| Verify search live | `TMDB_API_TOKEN` and `RAWG_API_KEY` in `local.properties` (Open Library needs none) | Search a film, a series, a book and a game; check posters, details and the credits shown |
+| Verify the roulette fix on a device | Run the app | Spin with an empty library (shows "Nothing to pick"), with one item, and with several (Spin Again changes the pick) |
 | Streaming-data quality test for Indonesia | TMDB token, plus a free Streaming Availability API key | Run the comparison in [plans/where-to-watch.md](plans/where-to-watch.md#step-0-data-quality-test) before building any UI |
 | Merge PR `feature/tmdb-search` → `main` | Review | Delete `fix/firestore-sync` (it's contained in the PR) |
 | iOS direction: Kotlin Multiplatform vs native Swift | User decision | See [plans/ios-port.md](plans/ios-port.md); this decides whether TMDB moves to Ktor |
@@ -20,10 +21,9 @@ Effort key: **S** is under a day, **M** is 1–3 days, **L** is a week or more.
 | # | Item | Why | Effort | Spec |
 |---|---|---|---|---|
 | 1 | "Where to watch" MVP (TMDB watch providers, per country) | Intended key selling point, especially outside Western markets | M | [plans/where-to-watch.md](plans/where-to-watch.md) |
-| 2 | Book search (Open Library, no key) | Books are manual-entry only | S | [plans/metadata-providers.md](plans/metadata-providers.md) |
-| 3 | Game search (RAWG) | Games are manual-entry only | S–M | [plans/metadata-providers.md](plans/metadata-providers.md) |
-| 4 | Music search (MusicBrainz + Cover Art Archive) and the Music detail UI | Music has neither search nor a detail screen | M | [plans/metadata-providers.md](plans/metadata-providers.md) |
-| 5 | Progress tracking UI (episode/page/hours steppers, auto-complete at 100%) | Makes the dashboard's "Continue" meaningful | S | |
+| 2 | ~~Book search (Open Library)~~ and ~~game search (RAWG)~~: **built**, awaiting live verification (RAWG needs `RAWG_API_KEY`) | | | [plans/metadata-providers.md](plans/metadata-providers.md) |
+| 3 | Music search (MusicBrainz + Cover Art Archive) and the Music detail UI | Music has neither search nor a detail screen | M | [plans/metadata-providers.md](plans/metadata-providers.md) |
+| 4 | Progress tracking UI (episode/page/hours steppers, auto-complete at 100%) | Makes the dashboard's "Continue" meaningful | S | |
 
 ## Known issues and tech debt
 

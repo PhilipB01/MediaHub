@@ -54,6 +54,7 @@ Why the networking and image libraries were chosen: see [DECISIONS.md](DECISIONS
 | Firebase project config | `app/google-services.json` | **Yes** | Not strictly secret, but consider ignoring it. Must include the Web OAuth client (`client_type: 3`) for Google Sign-In |
 | Google Sign-In Web Client ID | `res/values/strings.xml` → `default_web_client_id` | Yes | Passed to `GetGoogleIdOption.setServerClientId` |
 | TMDB token | `local.properties` → `TMDB_API_TOKEN` | No | v4 "API Read Access Token", exposed as `BuildConfig.TMDB_API_TOKEN` |
+| RAWG key | `local.properties` → `RAWG_API_KEY` | No | Free key from rawg.io/apidocs; exposed as `BuildConfig.RAWG_API_KEY`. Blank = game search disabled, manual add only |
 | Android SDK path | `local.properties` → `sdk.dir` | No | |
 | Firestore security rules | Firebase console only | No | Expected: `match /users/{userId}/media/{item} { allow read, write: if request.auth != null && request.auth.uid == userId; }`. Not verified, and not in the repo |
 
@@ -74,7 +75,9 @@ app/src/main/java/com/discflux/medialist/
 ├── MediaHubApplication.kt     @HiltAndroidApp
 ├── data/
 │   ├── local/                 MediaDatabase (v4), dao/MediaDao, entity/MediaEntity + toDomain/toEntity
-│   ├── remote/tmdb/           TmdbApi (Retrofit), TmdbDtos, TmdbMappers
+│   ├── remote/tmdb/           TmdbApi (Retrofit), TmdbDtos, TmdbMappers (films, TV)
+│   ├── remote/openlibrary/    OpenLibraryApi, DTOs, mappers (books)
+│   ├── remote/rawg/           RawgApi, DTOs, mappers (games)
 │   └── repository/            AuthRepositoryImpl, MediaRepositoryImpl, MediaSearchRepositoryImpl
 ├── di/                        DatabaseModule, FirebaseModule, NetworkModule, RepositoryModule
 ├── domain/
@@ -98,7 +101,7 @@ app/src/test/java/com/discflux/medialist/   JVM unit tests (mirrors the main pac
 All modules are `@InstallIn(SingletonComponent::class)`:
 - `DatabaseModule`: Room `media_hub.db` with `fallbackToDestructiveMigration()`; `MediaDao`
 - `FirebaseModule`: `FirebaseAuth.getInstance()`, `FirebaseFirestore.getInstance()`
-- `NetworkModule`: a `Json` instance with `ignoreUnknownKeys`, and `TmdbApi` with an OkHttp interceptor adding `Authorization: Bearer <token>`
+- `NetworkModule`: a `Json` instance with `ignoreUnknownKeys`, one shared `OkHttpClient`, and three Retrofit APIs, each with its own interceptor: `TmdbApi` (bearer token), `OpenLibraryApi` (`User-Agent`), `RawgApi` (`key` query parameter). Also `@Named("rawgEnabled")`, true when a RAWG key is set
 - `RepositoryModule`: `@Binds` for `MediaRepository`, `AuthRepository` and `MediaSearchRepository` (all singletons)
 
 ## 5. Data model
@@ -165,11 +168,17 @@ String routes in `ui/navigation/Screen.kt` (not type-safe routes):
 - **Adding:** the FAB opens Add Media for the selected category, with a category picker on the All tab.
 
 ### Add Media
-- **Search:** debounced at 400 ms, minimum 2 characters, through `MediaSearchRepository`.
-  - Films and TV use TMDB (`search/movie`, `search/tv`).
-  - Other categories have no provider yet.
-- **Picking a result:** the hit is shown immediately while `movie/{id}` or `tv/{id}` with `append_to_response=credits` loads. That fills in director or creator, the top 8 cast, runtime, genres and season/episode counts.
-- **Manual add:** an "Add manually" row is always available and is the only path for Books, Games and Music.
+- **Search:** debounced at 400 ms, minimum 2 characters, through `MediaSearchRepository`, which routes by category:
+
+  | Category | Provider | Search | Details on pick |
+  |---|---|---|---|
+  | Film | TMDB | `search/movie` | `movie/{id}?append_to_response=credits` |
+  | TV | TMDB | `search/tv` | `tv/{id}?append_to_response=credits` |
+  | Book | Open Library (no key) | `search.json` | `works/{id}.json` for the description |
+  | Game | RAWG (needs `RAWG_API_KEY`) | `games?search=` (includes screenshots) | `games/{id}` for description, developer and publisher |
+  | Music | none yet | | |
+- **Picking a result:** the hit is shown immediately while the details load (table above). For films and TV that fills in director or creator, the top 8 cast, runtime, genres and season/episode counts; for books the synopsis; for games the description, developer and publisher.
+- **Manual add:** an "Add manually" row is always available. It is the only path for Music, and for Games when no RAWG key is set; the screen says so when search isn't available. Each category shows its provider's required credit under the results.
 - **Saving:** the editable `DetailContent` form is shown before saving, and the TMDB attribution line sits at the bottom of the results.
 - **Not mapped on purpose:** TMDB's `vote_average`, because `rating` is the user's own score.
 
@@ -184,8 +193,8 @@ String routes in `ui/navigation/Screen.kt` (not type-safe routes):
 - **User section:** a completion switch, "Wishlist" and "Owned" filter chips (selecting one sets `isWishlist`/`isOwned` as a pair, so they behave like a single choice), a rating slider and notes. Changes save through `DetailViewModel.updateMediaItem` → `upsertMedia`.
 
 ### Roulette
-- **Pick:** `GetMediaSuggestionsUseCase` chooses at random from items that are neither complete nor wishlisted.
-- **Presentation:** a sweep-gradient wheel spins with `rememberInfiniteTransition`, then reveals the pick with "View Details" or "Spin Again". There's an empty state when nothing qualifies.
+- **Pick:** `GetMediaSuggestionsUseCase` chooses at random from items that are neither complete nor wishlisted, avoiding the previous pick when another exists.
+- **Presentation:** a sweep-gradient wheel spins with `rememberInfiniteTransition`, then reveals the pick with "View Details" or "Spin Again". `RouletteViewModel` owns the spin (`isRolling`, `suggestion`, `hasSpun`) and always ends it after about 1.5 s; when nothing qualifies the screen shows "Nothing to pick" with guidance.
 
 ## 8. Data and sync
 - **Write order:** Room is the source of truth for the UI. `MediaRepositoryImpl` writes Room first, then Firestore at `users/{uid}/media/{roomId}`.
@@ -204,13 +213,15 @@ String routes in `ui/navigation/Screen.kt` (not type-safe routes):
   - Before removing it, test Google Sign-In on a device. Then check that each screen's own insets still work (the `edge-to-edge` skill covers this).
 
 ## 10. Tests
-There are 35 JVM unit tests and no instrumented or Compose UI tests.
+There are 55 JVM unit tests and no instrumented or Compose UI tests.
 
 | File | Covers |
 |---|---|
 | `data/repository/MediaRepositoryImplTest` | New-item id sync, existing ids, signed-out local-only, offline writes not blocking, fetch filtering and failure handling |
 | `data/repository/MediaSearchRepositoryImplTest` | Endpoint per category, unsupported categories, network failure, detail fetch keeping the date |
 | `data/local/entity/MediaEntityMappingTest` | Round-trip of every field, unknown type code |
+| `data/remote/openlibrary/OpenLibraryMappersTest`, `data/remote/rawg/RawgMappersTest` | Real-shaped JSON → items; Open Library's string-or-object description; comma-safe screenshots |
+| `ui/roulette/RouletteViewModelTest` | Spin lifecycle, empty library, spin-again exclusion, ignored double tap |
 | `data/remote/tmdb/TmdbMappersTest` | Real-shaped TMDB JSON → `MediaItem` (year, poster URL, director, cast commas, seasons) |
 | `ui/medialist/MediaListViewModelTest` | Category and status filters, manual and date sort, `moveItem` positions, Film→Ongoing no-op |
 | `ui/addmedia/AddMediaViewModelTest` | Debounce, short or unsupported queries, errors, detail loading, manual add and save |

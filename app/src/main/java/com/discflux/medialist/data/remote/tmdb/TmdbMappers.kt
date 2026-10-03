@@ -18,7 +18,7 @@ private fun TmdbCreditsDto?.castNames(): List<String> =
 fun TmdbMovieDto.toSearchResult(now: Long = System.currentTimeMillis()): MediaSearchResult {
     val director = credits?.crew?.firstOrNull { it.job == "Director" }?.name
     return MediaSearchResult(
-        remoteId = id,
+        remoteId = id.toString(),
         item = MediaItem(
             type = MediaCategory.FILM,
             title = title,
@@ -39,7 +39,7 @@ fun TmdbMovieDto.toSearchResult(now: Long = System.currentTimeMillis()): MediaSe
 fun TmdbTvDto.toSearchResult(now: Long = System.currentTimeMillis()): MediaSearchResult {
     val creator = createdBy.firstOrNull()?.name
     return MediaSearchResult(
-        remoteId = id,
+        remoteId = id.toString(),
         item = MediaItem(
             type = MediaCategory.TV_SERIES,
             title = name,

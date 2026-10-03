@@ -31,7 +31,7 @@ class AddMediaViewModelTest {
     private val searchRepository: MediaSearchRepository = mockk()
     private val testDispatcher = StandardTestDispatcher()
 
-    private val hit = MediaSearchResult(1, MediaItem(type = MediaCategory.FILM, title = "Dune"))
+    private val hit = MediaSearchResult("1", MediaItem(type = MediaCategory.FILM, title = "Dune"))
 
     @Before
     fun setup() {

@@ -56,6 +56,8 @@ class AddMediaViewModel @Inject constructor(
         }
     }
 
+    fun isSearchSupported(category: MediaCategory): Boolean = searchRepository.isSupported(category)
+
     fun onResultSelected(result: MediaSearchResult) {
         searchJob?.cancel()
         // Show the search hit straight away, then fill in cast, runtime etc. when details arrive.

@@ -1,6 +1,6 @@
 # Plan: metadata search for Books, Games and Music
 
-**Status:** not started. Films and TV are done (TMDB, `data/remote/tmdb/`).
+**Status:** Films and TV (TMDB), Books (Open Library) and Games (RAWG) are **implemented** on `feature/roulette-and-providers`; Music is not started. The Books and Games sections below describe what was built, with the endpoints confirmed against the providers' docs on 2026-10-03; unbuilt details (Music) are still from memory.
 **Verification status:** product, pricing and coverage facts for TMDB, Streaming Availability, Watchmode and JustWatch were checked against their docs on 2026-10-03. Endpoint paths, field names and rate limits below that are not marked otherwise were written from memory of the public APIs; confirm each against the provider's current docs before coding.
 **Pattern to follow:**
 - API, DTOs and mappers go in `data/remote/<provider>/`.
@@ -28,7 +28,8 @@ Mappers must strip commas from list values (cast, screenshots), because `MediaEn
 | `imageUrl` | the cover URL |
 | `url` | `https://openlibrary.org{key}` |
 
-- **remoteId:** the work key is a string (`/works/OL45883W`). Either widen `MediaSearchResult.remoteId` to `String`, or keep the key in `url`. Prefer widening it; do that when adding the second provider.
+- **remoteId:** the search returns the work key as `/works/OL45883W`; the mapper keeps only the bare id, and `MediaSearchResult.remoteId` is a `String` for this reason.
+- **Implemented notes:** the covers endpoint returns a blank image for missing covers unless `?default=false`, so the mapper builds no URL when `cover_i` is absent. Cover-id lookups are not subject to the 100 requests / 5 minutes per IP limit. The `description` field in the work record is either a string or `{type, value}`; both are handled.
 - **Alternative:** Google Books (`googleapis.com/books/v1/volumes?q=`) has better descriptions and covers, and works without a key at low volume. Possible later fallback, or as an ISBN source for barcode scanning.
 
 ## Games: RAWG (recommended)
@@ -51,6 +52,7 @@ Mappers must strip commas from list values (cast, screenshots), because `MediaEn
 | `url` | `https://rawg.io/games/{slug}` |
 
 - `playtime` is the *average* playtime, not the user's own, so don't map it to `hoursPlayed`.
+- **Implemented notes:** the key is added by an OkHttp interceptor (`RAWG_API_KEY` in `local.properties`); with no key, game search is disabled and the screen offers manual add. Screenshots come from the list response's `short_screenshots` (the detail response doesn't repeat them, so they are kept from the search hit).
 - **IGDB alternative:** richer data, but it needs Twitch client-credentials OAuth with a **client secret**. That can't safely ship in an APK, so it requires a backend proxy. Defer it.
 
 ## Music: MusicBrainz + Cover Art Archive
@@ -78,7 +80,7 @@ Mappers must strip commas from list values (cast, screenshots), because `MediaEn
 ## Order and effort
 | Step | Effort |
 |---|---|
-| Widen `remoteId` to `String`; add `remoteSource` + `remoteId` to the entity (v5 migration, shared with "Where to watch") | S |
-| Open Library | S |
-| RAWG | S–M |
+| ~~Widen `remoteId` to `String`~~ (done); add `remoteSource` + `remoteId` to the entity (v5 migration, shared with "Where to watch") | S |
+| ~~Open Library~~ (done) | |
+| ~~RAWG~~ (done) | |
 | MusicBrainz, Music fields, `MusicDetails` UI | M |
