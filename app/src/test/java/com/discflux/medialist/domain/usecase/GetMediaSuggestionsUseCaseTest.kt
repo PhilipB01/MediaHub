@@ -37,4 +37,34 @@ class GetMediaSuggestionsUseCaseTest {
         
         assertNull(result)
     }
+
+    @Test
+    fun `excludes wishlist items`() = runTest {
+        every { repository.getAllMedia() } returns flowOf(
+            listOf(MediaItem(id = 1, title = "Wish", type = MediaCategory.FILM, isWishlist = true))
+        )
+
+        assertNull(useCase())
+    }
+
+    @Test
+    fun `avoids the excluded id when another candidate exists`() = runTest {
+        every { repository.getAllMedia() } returns flowOf(
+            listOf(
+                MediaItem(id = 1, title = "A", type = MediaCategory.FILM),
+                MediaItem(id = 2, title = "B", type = MediaCategory.FILM)
+            )
+        )
+
+        repeat(20) { assertEquals(2L, useCase(excludeId = 1)?.id) }
+    }
+
+    @Test
+    fun `falls back to the excluded item when it is the only candidate`() = runTest {
+        every { repository.getAllMedia() } returns flowOf(
+            listOf(MediaItem(id = 1, title = "Only", type = MediaCategory.FILM))
+        )
+
+        assertEquals(1L, useCase(excludeId = 1)?.id)
+    }
 }

@@ -8,13 +8,13 @@ import javax.inject.Inject
 class GetMediaSuggestionsUseCase @Inject constructor(
     private val repository: MediaRepository
 ) {
-    suspend operator fun invoke(): MediaItem? {
+    /**
+     * Picks a random item that is neither completed nor on the wishlist. When [excludeId] is given
+     * (the previous pick), a different item is chosen unless it is the only candidate.
+     */
+    suspend operator fun invoke(excludeId: Long? = null): MediaItem? {
         val allMedia = repository.getAllMedia().first()
-        val availableMedia = allMedia.filter { !it.isComplete && !it.isWishlist }
-        return if (availableMedia.isNotEmpty()) {
-            availableMedia.random()
-        } else {
-            null
-        }
+        val available = allMedia.filter { !it.isComplete && !it.isWishlist }
+        return available.filter { it.id != excludeId }.ifEmpty { available }.randomOrNull()
     }
 }

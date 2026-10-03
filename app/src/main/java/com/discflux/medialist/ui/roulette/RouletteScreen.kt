@@ -32,9 +32,10 @@ fun RouletteScreen(
     onNavigateToDetail: (Long) -> Unit,
     viewModel: RouletteViewModel = hiltViewModel()
 ) {
-    val suggestedMedia by viewModel.suggestedMedia.collectAsState()
-    var isRolling by remember { mutableStateOf(false) }
-    
+    val uiState by viewModel.uiState.collectAsState()
+    val suggestedMedia = uiState.suggestion
+    val isRolling = uiState.isRolling
+
     // Animation for the "Spinning" state
     val infiniteTransition = rememberInfiniteTransition(label = "rolling")
     val rotation by infiniteTransition.animateFloat(
@@ -79,7 +80,7 @@ fun RouletteScreen(
                     .padding(innerPadding)
                     .padding(32.dp)
             ) {
-                if (suggestedMedia == null && !isRolling) {
+                if (suggestedMedia == null && !isRolling && !uiState.isNothingToPick) {
                     Text(
                         text = "Feeling lucky?",
                         style = MaterialTheme.typography.headlineMedium,
@@ -172,10 +173,10 @@ fun RouletteScreen(
                                             modifier = Modifier.size(60.dp),
                                             tint = MaterialTheme.colorScheme.primaryContainer
                                         )
-                                        if (suggestedMedia == null && !isRolling) {
+                                        if (uiState.isNothingToPick) {
                                             Text(
-                                                text = "Empty Library",
-                                                style = MaterialTheme.typography.labelMedium,
+                                                text = "Nothing to pick",
+                                                style = MaterialTheme.typography.labelLarge,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
@@ -188,10 +189,20 @@ fun RouletteScreen(
 
                 Spacer(modifier = Modifier.height(48.dp))
 
+                if (uiState.isNothingToPick) {
+                    Text(
+                        text = "Add something you haven't finished (and that isn't on your wishlist) and try again.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                }
+
                 // Action Buttons
                 if (suggestedMedia != null && !isRolling) {
                     Button(
-                        onClick = { onNavigateToDetail(suggestedMedia!!.id) },
+                        onClick = { onNavigateToDetail(suggestedMedia.id) },
                         modifier = Modifier.fillMaxWidth().height(56.dp),
                         shape = RoundedCornerShape(16.dp)
                     ) {
@@ -199,11 +210,7 @@ fun RouletteScreen(
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                     OutlinedButton(
-                        onClick = {
-                            isRolling = true
-                            viewModel.roll()
-                            // Simulate delay for animation
-                        },
+                        onClick = viewModel::roll,
                         modifier = Modifier.fillMaxWidth().height(56.dp),
                         shape = RoundedCornerShape(16.dp)
                     ) {
@@ -211,18 +218,9 @@ fun RouletteScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Spin Again")
                     }
-                    
-                    // Trigger roll end after a delay
-                    LaunchedEffect(suggestedMedia) {
-                        kotlinx.coroutines.delay(1500L)
-                        isRolling = false
-                    }
                 } else {
                     Button(
-                        onClick = {
-                            isRolling = true
-                            viewModel.roll()
-                        },
+                        onClick = viewModel::roll,
                         enabled = !isRolling,
                         modifier = Modifier.fillMaxWidth().height(64.dp).scale(if (isRolling) 0.95f else 1f),
                         shape = RoundedCornerShape(24.dp)
