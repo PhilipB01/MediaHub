@@ -16,6 +16,7 @@ MediaHub allows users to:
 - [docs/DECISIONS.md](docs/DECISIONS.md): why major choices were made
 - [docs/HISTORY.md](docs/HISTORY.md): project history and legacy origins
 - [docs/plans/](docs/plans/): feature specs (where to watch, metadata providers, iOS port)
+- [docs/archive/](docs/archive/README.md): original Gemini plans and handovers, kept verbatim
 
 To use TMDB search, add `TMDB_API_TOKEN=<v4 read access token>` to `local.properties`.
 

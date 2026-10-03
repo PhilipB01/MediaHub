@@ -1,7 +1,7 @@
 # Project History
 
 Compiled from git history and the Android Studio agent artifacts (Gemini sessions) from the `medialist` and `androidboilerplate` projects (paths in the index at the end).
-Their useful content is folded into these docs, so the originals are no longer needed; the Android Studio cache may be cleaned at any time.
+Their useful content is folded into these docs, and the full originals are preserved in [archive/](archive/README.md), so the Android Studio cache is no longer needed.
 Where an artifact's claims differ from the code, the code wins and the difference is noted.
 
 ## Origins
@@ -58,7 +58,9 @@ These come from the `androidboilerplate` plan and UX notes:
 | Master handover and Claude handover: the dev bypass "utilizes Firebase Anonymous Authentication" | The button only calls `forceBypass()` (no Firebase user); `signInAnonymously()` is never called |
 | Phase 4 task list: manual verification of category navigation, wishlist filtering and reorder with wishlist items | Never ticked off. Still unverified on a device |
 
-## Artifact index (outside the repo)
+## Artifact index
+Every file below is archived verbatim in [archive/](archive/README.md); the paths here are only where they originally lived.
+
 medialist project: `~/Library/Caches/Google/AndroidStudio2026.1.3/projects/medialist.20a51f62/.artifacts/`
 
 | Session folder | Files | Topic |
