@@ -1,6 +1,7 @@
 # Plan: metadata search for Books, Games and Music
 
 **Status:** not started. Films and TV are done (TMDB, `data/remote/tmdb/`).
+**Verification status:** product, pricing and coverage facts for TMDB, Streaming Availability, Watchmode and JustWatch were checked against their docs on 2026-10-03. Endpoint paths, field names and rate limits below that are not marked otherwise were written from memory of the public APIs; confirm each against the provider's current docs before coding.
 **Pattern to follow:**
 - API, DTOs and mappers go in `data/remote/<provider>/`.
 - Provide the API in `NetworkModule` with a `@Named` Retrofit or OkHttp instance per base URL.

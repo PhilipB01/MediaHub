@@ -1,6 +1,7 @@
 # Plan: "Where to watch" (streaming availability by country)
 
 **Status:** researched 2026-10-03, not started. Blocked on the data-quality test below.
+**Verification status:** product, pricing and coverage facts for TMDB, Streaming Availability, Watchmode and JustWatch were checked against their docs on 2026-10-03. Endpoint paths, field names and rate limits below that are not marked otherwise were written from memory of the public APIs; confirm each against the provider's current docs before coding.
 **Goal:** for any film or series, show which services in the user's country offer it, split into included with a subscription, free or with ads, rent, and buy. It must work well outside Western markets; Indonesia is the reference case.
 
 ## Data sources

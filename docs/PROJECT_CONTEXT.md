@@ -59,6 +59,14 @@ Why the networking and image libraries were chosen: see [DECISIONS.md](DECISIONS
 
 Anything in `BuildConfig` ships inside the APK and can be extracted. That's acceptable for development; production keys should sit behind a backend proxy.
 
+### Setting up a fresh clone
+1. Open the project in Android Studio and let Gradle sync (JDK 17).
+2. **Firebase:** create or reuse a Firebase project with an Android app for `com.discflux.medialist`. Enable **Authentication → Google** and **Firestore**. Download `google-services.json` into `app/`. It must contain an OAuth client of `client_type: 3` (the Web client); if it doesn't, add your debug SHA-1 in Project settings → Your apps, then re-download.
+3. Put the Web client ID in `res/values/strings.xml` as `default_web_client_id` (Firebase console → Authentication → Sign-in method → Google → Web SDK configuration).
+4. Add Firestore rules (see the table above).
+5. Add `TMDB_API_TOKEN` to `local.properties` (optional; only film/TV search needs it).
+6. Run on an emulator with a Google account, or use "Bypass Sign-In (Dev Only)" for local-only data.
+
 ## 4. Source layout
 ```
 app/src/main/java/com/discflux/medialist/
@@ -136,7 +144,9 @@ String routes in `ui/navigation/Screen.kt` (not type-safe routes):
 ### Login
 - **Google sign-in:** Credential Manager `getCredential(context = activity, …)` with `GetGoogleIdOption(serverClientId = default_web_client_id)`. The returned ID token goes to Firebase `signInWithCredential`.
 - **Activity context:** passing an `Activity` rather than an application context was the fix for the "No credentials available" error.
-- **Dev bypass:** "Bypass Sign-In (Dev Only)" calls `forceBypass()` and navigates on immediately. `signInAnonymously()` exists as a separate path; if it fails, it also sets the bypass flag.
+- **Dev bypass:** "Bypass Sign-In (Dev Only)" calls `forceBypass()`, which navigates on immediately with **no Firebase user**, so the app is local-only (nothing syncs).
+  - `LoginViewModel.signInAnonymously()` and `AuthRepository.signInAnonymously()` exist, but no screen calls them (dead code today). Earlier handovers wrongly said the bypass button uses anonymous auth.
+  - To test sync without a Google account, wire the button to `signInAnonymously()` (its failure path already falls back to the bypass flag).
 - **Navigation:** happens whenever `user != null || isBypassed`.
 - **Not yet handled:** Google sign-in failures are logged but not shown to the user, and anonymous accounts are never linked to Google.
 
@@ -171,7 +181,7 @@ String routes in `ui/navigation/Screen.kt` (not type-safe routes):
   - **Book:** page progress, publisher, synopsis
   - **Game:** genre, hours, screenshot placeholders
   - **Music:** placeholder text only
-- **User section:** a completion switch, Wishlist and Owned toggles, a rating slider and notes. Changes save through `DetailViewModel.updateMediaItem` → `upsertMedia`.
+- **User section:** a completion switch, "Wishlist" and "Owned" filter chips (selecting one sets `isWishlist`/`isOwned` as a pair, so they behave like a single choice), a rating slider and notes. Changes save through `DetailViewModel.updateMediaItem` → `upsertMedia`.
 
 ### Roulette
 - **Pick:** `GetMediaSuggestionsUseCase` chooses at random from items that are neither complete nor wishlisted.
@@ -211,5 +221,15 @@ Test notes:
 - Firebase `Task`s are MockK mocks because `Tasks.forResult` needs a `Looper`.
 - ViewModel tests use `StandardTestDispatcher` with `Dispatchers.setMain`, plus Turbine for `StateFlow`s.
 
-## 11. Agent tooling
+## 11. Manual verification checklist
+Not yet done on a device (carried over from the original plans):
+- **Login:** "Sign in with Google" shows the account picker and lands on the Dashboard; bypass lands on the Dashboard without Firebase.
+- **Sync:** add an item on one device, sign in on another, and confirm it appears (and that no duplicates appear after relaunching).
+- **Category navigation:** Dashboard category row → Media List opens on the right tab.
+- **Wishlist and status:** set an item to Wishlist on Detail, confirm it appears under the Wishlist filter and is excluded from Roulette; drag between status groups; reorder within a group (with and without a filter).
+- **Roulette:** Spin picks an incomplete, non-wishlist item; the empty state shows with an empty library.
+- **Add Media (TMDB):** search a film and a series, pick one, check poster, cast and runtime, save, find it in the list; try offline and with no token.
+- **Edge-to-edge:** content under the status and navigation bars, keyboard not covering text fields, on API 35.
+
+## 12. Agent tooling
 Android agent skills are installed for Claude Code (`~/.claude/skills/`), Gemini (`~/.gemini/config/skills/`) and the Android Studio plugin (`~/.android-studio/skills/`). They include `edge-to-edge`, `navigation-3`, `adaptive`, `camerax`, `styles`, `r8-analyzer`, `agp-9-upgrade`, `verified-email` and `migrate-xml-views-to-jetpack-compose`. Use the matching skill for that kind of work.

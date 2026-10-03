@@ -8,6 +8,7 @@ Effort key: **S** is under a day, **M** is 1–3 days, **L** is a week or more.
 ---
 
 ## Now: waiting on the user
+*(Time-sensitive: update or delete rows as they are resolved.)*
 | Item | Blocked on | Then |
 |---|---|---|
 | Verify TMDB search live | `TMDB_API_TOKEN` in `local.properties` | Run the app and search for a few films and series; check posters, cast and runtime |
@@ -32,7 +33,7 @@ Effort key: **S** is under a day, **M** is 1–3 days, **L** is a week or more.
 | `fetchFromRemote` is remote-wins and insert-only | Deletes on another device never propagate; unsynced local edits can be overwritten | `updatedAt` + last-write-wins, `deleted` tombstones, a Firestore snapshot listener instead of a one-shot fetch | M |
 | Firestore write failures are only logged | Silent divergence between Room and the cloud | Per-item `pendingSync` flag and retry (WorkManager) | M |
 | `fallbackToDestructiveMigration()`, `exportSchema = false` | Any schema change wipes local data | Real `Migration`s, exported schemas, a migration test | S |
-| Anonymous (dev bypass) accounts can't be upgraded | Their data is orphaned on Google sign-in | `linkWithCredential`, then merge | S–M |
+| Dev bypass is local-only; anonymous sign-in is dead code | Sync can't be tested without a Google account; if wired up, anonymous data would be orphaned on Google sign-in | Call `signInAnonymously()` from the bypass button, add `linkWithCredential` and a merge | S–M |
 | No Firestore rules in the repo | Can't review or deploy access control | Add `firestore.rules` and `firebase.json` | S |
 | `app/google-services.json` tracked in git | Config leaks into a public repo, if it is public | Decide; if ignoring it, document setup in the README | S |
 
